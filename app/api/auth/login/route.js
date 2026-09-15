@@ -48,7 +48,9 @@ export async function POST(request) {
       data: {
         user: userWithoutPassword,
         token
-      }
+      },
+      user: userWithoutPassword,
+      token
     });
 
     // Set HTTP-only cookie for server-side authentication

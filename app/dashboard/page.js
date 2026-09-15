@@ -29,43 +29,67 @@ export default function Dashboard() {
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
-    if (!userData) {
+    if (!userData || userData === 'undefined' || userData === 'null') {
       router.push('/login');
       return;
     }
 
-    const parsedUser = JSON.parse(userData);
-    setUser(parsedUser);
-    fetchDashboardData(parsedUser._id);
+    try {
+      const parsedUser = JSON.parse(userData);
+      if (!parsedUser || typeof parsedUser !== 'object') {
+        router.push('/login');
+        return;
+      }
+      setUser(parsedUser);
+      if (parsedUser._id) {
+        fetchDashboardData(parsedUser._id);
+      } else {
+        setLoading(false);
+      }
+    } catch (e) {
+      console.error('Error parsing user data:', e);
+      router.push('/login');
+    }
   }, [router]);
 
   const fetchDashboardData = async (userId) => {
     try {
       setLoading(true);
       
-      // Fetch user stats (you'll need to implement these endpoints)
-      const [favoritesRes, mealPlansRes, groceryListsRes, recipesRes] = await Promise.all([
+      const [favoritesRes, mealPlansRes, groceryListsRes, recipesRes] = await Promise.allSettled([
         fetch(`/api/favourites?userId=${userId}`),
         fetch(`/api/meal-plans?userId=${userId}`),
         fetch(`/api/grocery-lists?userId=${userId}`),
         fetch('/api/recipes?limit=5')
       ]);
 
-      const favorites = await favoritesRes.json();
-      const mealPlans = await mealPlansRes.json();
-      const groceryLists = await groceryListsRes.json();
-      const recipes = await recipesRes.json();
+      const getJson = async (resResult, fallback) => {
+        if (resResult.status === 'fulfilled' && resResult.value?.ok) {
+          try {
+            return await resResult.value.json();
+          } catch {
+            return fallback;
+          }
+        }
+        return fallback;
+      };
+
+      const favorites = await getJson(favoritesRes, { favorites: [] });
+      const mealPlans = await getJson(mealPlansRes, { mealPlans: [] });
+      const groceryLists = await getJson(groceryListsRes, { groceryLists: [] });
+      const recipes = await getJson(recipesRes, { recipes: [] });
 
       setStats({
-        favoriteRecipes: favorites.favorites?.length || 0,
-        mealPlans: mealPlans.mealPlans?.length || 0,
-        groceryLists: groceryLists.groceryLists?.length || 0,
-        totalCookingTime: favorites.favorites?.reduce((total, recipe) => total + (recipe.cookingTime || 0), 0) || 0
+        favoriteRecipes: Array.isArray(favorites.favorites) ? favorites.favorites.length : 0,
+        mealPlans: Array.isArray(mealPlans.mealPlans) ? mealPlans.mealPlans.length : 0,
+        groceryLists: Array.isArray(groceryLists.groceryLists) ? groceryLists.groceryLists.length : 0,
+        totalCookingTime: Array.isArray(favorites.favorites)
+          ? favorites.favorites.reduce((total, recipe) => total + (recipe.cookingTime || 0), 0)
+          : 0
       });
 
-      setPopularRecipes(recipes.recipes || []);
+      setPopularRecipes(Array.isArray(recipes.recipes) ? recipes.recipes : []);
       
-      // Mock recent activity (you can implement this based on your needs)
       setRecentActivity([
         { type: 'favorite', item: 'Spaghetti Carbonara', time: '2 hours ago' },
         { type: 'meal_plan', item: 'Weekly Meal Plan', time: '1 day ago' },
@@ -124,7 +148,7 @@ export default function Dashboard() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome back, {user?.username || 'Chef'}!
+            Welcome back, {user?.name || user?.username || 'Chef'}!
           </h1>
           <p className="text-gray-600">
             Here's what's cooking in your kitchen today

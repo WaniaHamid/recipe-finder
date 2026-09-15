@@ -28,9 +28,15 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (response.ok) {
-        localStorage.setItem('user', JSON.stringify(data.user))
-        localStorage.setItem('token', data.token)
-        router.push('/')
+        const userObj = data.data?.user || data.user;
+        const tokenVal = data.data?.token || data.token;
+        if (userObj) {
+          localStorage.setItem('user', JSON.stringify(userObj));
+        }
+        if (tokenVal) {
+          localStorage.setItem('token', tokenVal);
+        }
+        router.push('/');
       } else {
         setError(data.error || data.message || 'Login failed')
       }
