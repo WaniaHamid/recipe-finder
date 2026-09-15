@@ -133,7 +133,7 @@ export default function SearchRecipe() {
                   key={key}
                   value={filters[key]}
                   onChange={(e) => setFilters({ ...filters, [key]: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
                 >
                   <option value="">{labels[key]}</option>
                   {options[key].slice(1).map((val) => (
