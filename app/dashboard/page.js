@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { 
   Search, 
   Heart, 
@@ -115,7 +116,7 @@ export default function Dashboard() {
       title: 'View Favorites',
       description: 'Your saved recipes',
       icon: Heart,
-      href: '/favourites',
+      href: '/favorites',
       color: 'bg-red-500 hover:bg-red-600'
     },
     {
@@ -213,15 +214,15 @@ export default function Dashboard() {
             {quickActions.map((action, index) => {
               const Icon = action.icon;
               return (
-                <button
+                <Link
                   key={index}
-                  onClick={() => router.push(action.href)}
-                  className={`${action.color} text-white p-6 rounded-lg transition-colors duration-200 text-left`}
+                  href={action.href}
+                  className={`${action.color} text-white p-6 rounded-lg transition-colors duration-200 text-left block`}
                 >
                   <Icon className="w-8 h-8 mb-3" />
                   <h3 className="font-semibold text-lg mb-1">{action.title}</h3>
                   <p className="text-white/80 text-sm">{action.description}</p>
-                </button>
+                </Link>
               );
             })}
           </div>

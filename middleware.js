@@ -18,40 +18,22 @@ export function middleware(request) {
   const token = request.cookies.get('token')?.value;
   const { pathname } = request.nextUrl;
 
-  // Public routes that don't require authentication
-  const publicRoutes = [
-    '/',
-    '/search-recipe',
-    '/meal-planning',
-    '/login',
-    '/register',
-    '/api/auth/login',
-    '/api/auth/register',
-    '/api/recipes',
-    '/api/seed'
-  ];
+  // Normalized path without trailing slash
+  const path = pathname.replace(/\/$/, '') || '/';
 
-  // Check if the current path is a public route
-  const isPublicRoute = publicRoutes.some(route => 
-    pathname === route || pathname.startsWith('/api/recipes/')
-  );
+  // Only protect routes that strictly require authentication
+  const protectedRoutes = ['/dashboard', '/favorites', '/grocery-list'];
+  const isProtectedRoute = protectedRoutes.some(route => path === route || path.startsWith(`${route}/`));
 
-  // If trying to access protected route without token
-  if (!isPublicRoute) {
+  // If trying to access protected route without valid token
+  if (isProtectedRoute) {
     if (!token) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
     
     // Basic token validation for Edge Runtime
     const payload = decodeJwtPayload(token);
-    if (!payload) {
-      const response = NextResponse.redirect(new URL('/login', request.url));
-      response.cookies.delete('token');
-      return response;
-    }
-
-    // Check if token is expired
-    if (payload.exp && payload.exp * 1000 < Date.now()) {
+    if (!payload || (payload.exp && payload.exp * 1000 < Date.now())) {
       const response = NextResponse.redirect(new URL('/login', request.url));
       response.cookies.delete('token');
       return response;
@@ -59,7 +41,7 @@ export function middleware(request) {
   }
 
   // If logged in user tries to access auth pages, redirect to dashboard
-  if (token && (pathname === '/login' || pathname === '/register')) {
+  if (token && (path === '/login' || path === '/register')) {
     const payload = decodeJwtPayload(token);
     // Check if token is not expired
     if (payload && (!payload.exp || payload.exp * 1000 > Date.now())) {
