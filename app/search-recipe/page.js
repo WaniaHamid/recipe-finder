@@ -114,36 +114,6 @@ export default function SearchRecipe() {
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {['mealType', 'maxTime', 'maxCalories', 'diet'].map((key) => {
-              const options = {
-                mealType: ['', 'breakfast', 'lunch', 'dinner', 'snack', 'dessert'],
-                maxTime: ['', '15', '30', '60', '120'],
-                maxCalories: ['', '300', '500', '800'],
-                diet: ['', 'vegetarian', 'vegan', 'gluten-free', 'keto']
-              };
-              const labels = {
-                mealType: 'Any Meal Type',
-                maxTime: 'Any Prep Time',
-                maxCalories: 'Any Calories',
-                diet: 'Any Diet'
-              };
-              return (
-                <select
-                  key={key}
-                  value={filters[key]}
-                  onChange={(e) => setFilters({ ...filters, [key]: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
-                >
-                  <option value="">{labels[key]}</option>
-                  {options[key].slice(1).map((val) => (
-                    <option key={val} value={val}>{val.charAt(0).toUpperCase() + val.slice(1)}</option>
-                  ))}
-                </select>
-              );
-            })}
-          </div>
-
           <div className="text-center">
             <button
               onClick={handleSearch}
