@@ -10,14 +10,14 @@ export async function POST(request) {
     
     const { name, email, password } = await request.json();
 
-    console.log('Request body:', { name, email, password });
+    console.log('Registration request received for:', email ? email.toLowerCase() : 'unknown');
 
     // Validation
     if (!name || !email || !password) {
       return NextResponse.json(
         { success: false, error: 'All fields are required' },
         { status: 400 }
-      );zzz
+      );
     }
 
     if (password.length < 6) {
