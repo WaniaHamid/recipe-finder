@@ -21,6 +21,8 @@ export function middleware(request) {
   // Public routes that don't require authentication
   const publicRoutes = [
     '/',
+    '/search-recipe',
+    '/meal-planning',
     '/login',
     '/register',
     '/api/auth/login',
