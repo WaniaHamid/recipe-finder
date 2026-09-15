@@ -4,6 +4,10 @@ import Recipe from '@/models/Recipe';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 
+export async function GET(request) {
+  return POST(request);
+}
+
 export async function POST(request) {
   try {
     await connectDB();
