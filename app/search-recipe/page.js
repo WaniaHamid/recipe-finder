@@ -166,18 +166,25 @@ export default function SearchRecipe() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {recipes.map((recipe) => (
                 <div key={recipe._id || recipe.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition">
-                  <img
-                    src={recipe.image || 'https://via.placeholder.com/400x250'}
-                    alt={recipe.title}
-                    onError={(e) => e.target.src = 'https://via.placeholder.com/400x250?text=No+Image'}
-                    className="w-full h-48 object-cover"
-                  />
+                  {recipe.image ? (
+                    <img
+                      src={recipe.image}
+                      alt={recipe.title}
+                      onError={(e) => { e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }}
+                      className="w-full h-48 object-cover"
+                    />
+                  ) : null}
+                  <div className="w-full h-48 bg-gradient-to-br from-pink-100 to-blue-100 items-center justify-center text-6xl"
+                    style={{ display: recipe.image ? 'none' : 'flex' }}>
+                    🍽️
+                  </div>
                   <div className="p-4 space-y-2">
                     <h3 className="text-lg font-semibold text-gray-800">{recipe.title}</h3>
                     <div className="flex flex-wrap gap-2 text-sm text-gray-600">
-                      {recipe.readyInMinutes && <span>⏱️ {recipe.readyInMinutes} min</span>}
+                      {(recipe.readyInMinutes || recipe.cookingTime?.total) && <span>⏱️ {recipe.readyInMinutes || recipe.cookingTime?.total} min</span>}
                       {recipe.servings && <span>👥 {recipe.servings} servings</span>}
-                      {recipe.healthScore && <span>💚 {recipe.healthScore}% healthy</span>}
+                      {recipe.difficulty && <span>📊 {recipe.difficulty.charAt(0).toUpperCase() + recipe.difficulty.slice(1)}</span>}
+                      {recipe.cuisine && <span>🌍 {recipe.cuisine}</span>}
                     </div>
                     <div className="flex justify-center mt-4">
                       <button 
@@ -223,34 +230,69 @@ export default function SearchRecipe() {
                 </div>
               ) : (
                 <div className="p-6">
-                  <img
-                    src={selectedRecipe.image || 'https://via.placeholder.com/600x300'}
-                    alt={selectedRecipe.title}
-                    onError={(e) => e.target.src = 'https://via.placeholder.com/600x300?text=No+Image'}
-                    className="w-full h-64 object-cover rounded-lg mb-6"
-                  />
+                  {/* Image or gradient placeholder */}
+                  {selectedRecipe.image ? (
+                    <img
+                      src={selectedRecipe.image}
+                      alt={selectedRecipe.title}
+                      onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                      className="w-full h-64 object-cover rounded-lg mb-6"
+                    />
+                  ) : null}
+                  <div
+                    className="w-full h-64 bg-gradient-to-br from-pink-100 via-white to-blue-100 rounded-lg mb-6 items-center justify-center text-8xl"
+                    style={{ display: selectedRecipe.image ? 'none' : 'flex' }}
+                  >
+                    🍽️
+                  </div>
+
+                  {/* Description */}
+                  {selectedRecipe.description && (
+                    <p className="text-gray-600 mb-6 text-sm leading-relaxed italic">{selectedRecipe.description}</p>
+                  )}
 
                   {/* Recipe Info */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 bg-gray-50 p-4 rounded-lg">
-                    {selectedRecipe.readyInMinutes && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6 bg-gray-50 p-4 rounded-xl">
+                    {(selectedRecipe.readyInMinutes || selectedRecipe.cookingTime?.total) && (
                       <div className="text-center">
                         <span className="text-2xl">⏱️</span>
-                        <p className="text-sm text-gray-600">Prep Time</p>
-                        <p className="font-semibold">{selectedRecipe.readyInMinutes} min</p>
+                        <p className="text-xs text-gray-500 mt-1">Total Time</p>
+                        <p className="font-semibold text-gray-800">{selectedRecipe.readyInMinutes || selectedRecipe.cookingTime?.total} min</p>
+                      </div>
+                    )}
+                    {selectedRecipe.cookingTime?.prep && (
+                      <div className="text-center">
+                        <span className="text-2xl">🔪</span>
+                        <p className="text-xs text-gray-500 mt-1">Prep</p>
+                        <p className="font-semibold text-gray-800">{selectedRecipe.cookingTime.prep} min</p>
                       </div>
                     )}
                     {selectedRecipe.servings && (
                       <div className="text-center">
                         <span className="text-2xl">👥</span>
-                        <p className="text-sm text-gray-600">Servings</p>
-                        <p className="font-semibold">{selectedRecipe.servings}</p>
+                        <p className="text-xs text-gray-500 mt-1">Servings</p>
+                        <p className="font-semibold text-gray-800">{selectedRecipe.servings}</p>
+                      </div>
+                    )}
+                    {selectedRecipe.difficulty && (
+                      <div className="text-center">
+                        <span className="text-2xl">📊</span>
+                        <p className="text-xs text-gray-500 mt-1">Difficulty</p>
+                        <p className="font-semibold text-gray-800 capitalize">{selectedRecipe.difficulty}</p>
+                      </div>
+                    )}
+                    {selectedRecipe.cuisine && (
+                      <div className="text-center">
+                        <span className="text-2xl">🌍</span>
+                        <p className="text-xs text-gray-500 mt-1">Cuisine</p>
+                        <p className="font-semibold text-gray-800">{selectedRecipe.cuisine}</p>
                       </div>
                     )}
                     {selectedRecipe.healthScore && (
                       <div className="text-center">
                         <span className="text-2xl">💚</span>
-                        <p className="text-sm text-gray-600">Health Score</p>
-                        <p className="font-semibold">{selectedRecipe.healthScore}%</p>
+                        <p className="text-xs text-gray-500 mt-1">Health Score</p>
+                        <p className="font-semibold text-gray-800">{selectedRecipe.healthScore}%</p>
                       </div>
                     )}
                   </div>
@@ -262,9 +304,11 @@ export default function SearchRecipe() {
                       <ul className="space-y-2">
                         {(selectedRecipe.extendedIngredients || selectedRecipe.ingredients || []).map((ing, i) => (
                           <li key={i} className="flex items-start">
-                            <span className="text-pink-400 mr-2">•</span>
+                            <span className="text-pink-400 mr-2 mt-1">•</span>
                             <span className="text-gray-700">
-                              {typeof ing === 'string' ? ing : ing.original || `${ing.amount} ${ing.unit} ${ing.name}`}
+                              {typeof ing === 'string'
+                                ? ing
+                                : ing.original || `${ing.amount || ing.quantity || ''} ${ing.unit || ''} ${ing.name}`.trim()}
                             </span>
                           </li>
                         ))}
@@ -276,39 +320,32 @@ export default function SearchRecipe() {
                       <h3 className="text-xl font-semibold mb-4 text-gray-800">Instructions</h3>
                       <div className="space-y-3">
                         {(() => {
-                          // Handle different instruction formats
                           let instructions = [];
-                          
-                          if (selectedRecipe.analyzedInstructions && selectedRecipe.analyzedInstructions.length > 0) {
+
+                          if (selectedRecipe.analyzedInstructions?.length > 0) {
                             instructions = selectedRecipe.analyzedInstructions[0].steps || [];
-                          } else if (selectedRecipe.instructions && Array.isArray(selectedRecipe.instructions)) {
+                          } else if (Array.isArray(selectedRecipe.instructions)) {
                             instructions = selectedRecipe.instructions.map((inst, i) => {
-                              // Handle different instruction object formats
                               if (typeof inst === 'string') {
                                 return { number: i + 1, step: inst };
-                              } else if (typeof inst === 'object' && inst !== null) {
-                                return { 
-                                  number: i + 1, 
-                                  step: inst.step || inst.description || inst.instruction || JSON.stringify(inst)
-                                };
+                              } else if (inst && typeof inst === 'object') {
+                                // seed format: { step: NUMBER, description: 'text' }
+                                const stepNum = typeof inst.step === 'number' ? inst.step : i + 1;
+                                const stepText = inst.description || inst.instruction || (typeof inst.step === 'string' ? inst.step : '') || JSON.stringify(inst);
+                                return { number: stepNum, step: stepText };
                               }
                               return { number: i + 1, step: String(inst) };
                             });
-                          } else if (selectedRecipe.instructions && typeof selectedRecipe.instructions === 'string') {
+                          } else if (typeof selectedRecipe.instructions === 'string') {
                             instructions = selectedRecipe.instructions.split('.').filter(s => s.trim()).map((inst, i) => ({ number: i + 1, step: inst.trim() }));
                           }
 
                           return instructions.length > 0 ? instructions.map((instruction, i) => (
                             <div key={i} className="flex">
-                              <span className="bg-blue-400 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-semibold mr-3 mt-1 flex-shrink-0">
+                              <span className="bg-gradient-to-br from-pink-400 to-blue-400 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm font-semibold mr-3 mt-0.5 flex-shrink-0">
                                 {instruction.number || i + 1}
                               </span>
-                              <p className="text-gray-700">
-                                {typeof instruction.step === 'string' 
-                                  ? instruction.step 
-                                  : String(instruction.step)
-                                }
-                              </p>
+                              <p className="text-gray-700 leading-relaxed">{instruction.step}</p>
                             </div>
                           )) : (
                             <p className="text-gray-500 italic">Instructions not available for this recipe.</p>
@@ -318,11 +355,20 @@ export default function SearchRecipe() {
                     </div>
                   </div>
 
-                  {/* Additional Info */}
+                  {/* Tags */}
+                  {selectedRecipe.tags?.length > 0 && (
+                    <div className="mt-6 flex flex-wrap gap-2">
+                      {selectedRecipe.tags.map((tag, i) => (
+                        <span key={i} className="bg-pink-100 text-pink-600 text-xs font-medium px-3 py-1 rounded-full capitalize">{tag}</span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Summary */}
                   {selectedRecipe.summary && (
                     <div className="mt-8">
                       <h3 className="text-xl font-semibold mb-4 text-gray-800">About This Recipe</h3>
-                      <div 
+                      <div
                         className="text-gray-700 prose max-w-none"
                         dangerouslySetInnerHTML={{ __html: selectedRecipe.summary }}
                       />
