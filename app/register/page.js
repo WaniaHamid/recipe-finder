@@ -48,7 +48,7 @@ export default function RegisterPage() {
         setSuccess('Account created successfully! Redirecting to login...')
         setTimeout(() => router.push('/login'), 2000)
       } else {
-        setError(data.message || 'Registration failed')
+        setError(data.error || data.message || 'Registration failed')
       }
     } catch {
       setError('Something went wrong. Please try again.')

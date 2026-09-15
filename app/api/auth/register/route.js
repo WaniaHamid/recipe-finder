@@ -96,10 +96,25 @@ export async function POST(request) {
     if (error.code === 11000) {
       // Check if it's a username index error (legacy)
       if (error.keyPattern && error.keyPattern.username) {
-        return NextResponse.json(
-          { success: false, error: 'Database index error. Please run the cleanup endpoint first: POST /api/cleanup' },
-          { status: 500 }
-        );
+        try {
+          await User.collection.dropIndex('username_1');
+          await user.save();
+          const token = generateToken(user._id);
+          const { password: _, ...userWithoutPassword } = user.toObject();
+          return NextResponse.json({
+            success: true,
+            data: {
+              user: userWithoutPassword,
+              token
+            }
+          }, { status: 201 });
+        } catch (dropErr) {
+          console.error('Failed to auto-resolve username index:', dropErr);
+          return NextResponse.json(
+            { success: false, error: 'Database index conflict: A legacy username index exists in Atlas. Please drop username_1 in MongoDB Atlas.' },
+            { status: 500 }
+          );
+        }
       }
       // Regular email duplicate error
       return NextResponse.json(
@@ -108,8 +123,15 @@ export async function POST(request) {
       );
     }
 
+    if (error.name === 'MongooseServerSelectionError') {
+      return NextResponse.json(
+        { success: false, error: 'Database connection failed: Could not connect to MongoDB Atlas. Please verify Network Access (0.0.0.0/0) and MONGODB_URI in Vercel.' },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { success: false, error: error.message || 'Internal server error' },
       { status: 500 }
     );
   }

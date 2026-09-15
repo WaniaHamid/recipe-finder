@@ -32,7 +32,7 @@ export default function LoginPage() {
         localStorage.setItem('token', data.token)
         router.push('/')
       } else {
-        setError(data.message || 'Login failed')
+        setError(data.error || data.message || 'Login failed')
       }
     } catch (error) {
       setError('Something went wrong. Please try again.')
