@@ -45,21 +45,33 @@ export const useAuth = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+
     if (token) {
-      // Decode token to get user info
       try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        // Check if token is expired
-        if (payload.exp * 1000 > Date.now()) {
-          setUser(payload);
-        } else {
-          localStorage.removeItem('token');
-          // Also clear server-side cookie by making a logout call
-          fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+        const parts = token.split('.');
+        if (parts.length === 3) {
+          let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+          while (base64.length % 4) base64 += '=';
+          const payload = JSON.parse(atob(base64));
+
+          // Check if token is expired
+          if (payload.exp && payload.exp * 1000 > Date.now()) {
+            let userData = payload;
+            if (storedUser) {
+              try {
+                userData = JSON.parse(storedUser);
+              } catch (_) {}
+            }
+            setUser(userData);
+          } else {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+          }
         }
       } catch (error) {
-        localStorage.removeItem('token');
-        fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+        console.error('Error decoding token:', error);
       }
     }
     setLoading(false);

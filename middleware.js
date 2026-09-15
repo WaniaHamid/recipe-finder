@@ -1,5 +1,19 @@
 import { NextResponse } from 'next/server';
 
+function decodeJwtPayload(token) {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4) {
+      base64 += '=';
+    }
+    return JSON.parse(atob(base64));
+  } catch {
+    return null;
+  }
+}
+
 export function middleware(request) {
   const token = request.cookies.get('token')?.value;
   const { pathname } = request.nextUrl;
@@ -27,24 +41,15 @@ export function middleware(request) {
     }
     
     // Basic token validation for Edge Runtime
-    try {
-      const parts = token.split('.');
-      if (parts.length !== 3) {
-        const response = NextResponse.redirect(new URL('/login', request.url));
-        response.cookies.delete('token');
-        return response;
-      }
+    const payload = decodeJwtPayload(token);
+    if (!payload) {
+      const response = NextResponse.redirect(new URL('/login', request.url));
+      response.cookies.delete('token');
+      return response;
+    }
 
-      const payload = JSON.parse(atob(parts[1]));
-      
-      // Check if token is expired
-      if (payload.exp && payload.exp * 1000 < Date.now()) {
-        const response = NextResponse.redirect(new URL('/login', request.url));
-        response.cookies.delete('token');
-        return response;
-      }
-    } catch (error) {
-      console.error('Token validation error:', error);
+    // Check if token is expired
+    if (payload.exp && payload.exp * 1000 < Date.now()) {
       const response = NextResponse.redirect(new URL('/login', request.url));
       response.cookies.delete('token');
       return response;
@@ -53,18 +58,10 @@ export function middleware(request) {
 
   // If logged in user tries to access auth pages, redirect to dashboard
   if (token && (pathname === '/login' || pathname === '/register')) {
-    try {
-      const parts = token.split('.');
-      if (parts.length === 3) {
-        const payload = JSON.parse(atob(parts[1]));
-        // Check if token is not expired
-        if (!payload.exp || payload.exp * 1000 > Date.now()) {
-          return NextResponse.redirect(new URL('/dashboard', request.url));
-        }
-      }
-    } catch (error) {
-      // If token is invalid, let them access auth pages
-      console.error('Token validation error:', error);
+    const payload = decodeJwtPayload(token);
+    // Check if token is not expired
+    if (payload && (!payload.exp || payload.exp * 1000 > Date.now())) {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
     }
   }
 
